@@ -1,0 +1,81 @@
+<script src="#WORKSPACE_IMAGES#highcharts.js"></script>
+<script src="#WORKSPACE_IMAGES#exporting.js"></script>
+<script type="text/javascript">
+  
+    $.post('wwv_flow.show',
+           {"p_request" : "APPLICATION_PROCESS=get_weight_wear_forecast",
+            "p_flow_id" : $v('pFlowId'),
+            "p_flow_step_id" : $v('pFlowStepId'),
+            "p_instance" : $v('pInstance'),
+            "x01" : $v('P24_CHECKED_ROLL_TYPES')
+           },
+           function(strData){
+               var seriesData = JSON.parse(strData, function(key, value) {
+                      return value;
+		   });
+var AS = { name:'AS',marker: {enabled: false},color:'black', dashStyle: 'DashDot'};
+var GP = { name:'GP',marker: {enabled: false}, color:'black', dashStyle: 'LongDash'};
+var KB = { name:'KB',marker: {enabled: false}, color:'black', dashStyle: 'LongDashDotDot'};
+var items_to_delete = [];
+seriesData.forEach(function(item,i,array){
+       if (item.prognosis != -1){
+       item.data = [];
+       item.data.push([0,parseInt(item.act_wear)]);
+       item.data.push([parseInt(item.prognosis),100]);
+       delete item.prognosis
+       delete item.act_wear
+       }else{
+          items_to_delete.push(i);       
+       }
+       });
+       for (var i = items_to_delete.length -1; i >= 0; i--)
+   seriesData.splice(items_to_delete[i],1);
+              var rtype = $v('P24_CHECKED_ROLL_TYPES');
+              var YTICK = rtype == '2' ? 1 : (rtype == '1'? 10 : 5);
+			  var XTICK = rtype == '2' ? 50000 : 10000;
+              seriesData.unshift(AS,GP,KB);  
+
+              $('#container_WR_L_W3').highcharts({
+	                     plotOptions:{
+				  series: {
+				     marker:{ symbol: "circle", enabled: true, }
+					  }
+					},
+                                     title: { floating: true, margin: 5, text: "" },
+					subtitle: {
+						text: ''
+					},
+					xAxis: {         
+						title: {
+							text: 'Weight, tn'
+						},
+						tickInterval: XTICK,
+                                                plotLines: [{ color: "#FF0000", width: 1 }]
+					},
+					yAxis: {
+						title: {
+							text: 'Wear, %'
+						},
+						min: 0,
+                                                max: 100,
+						tickInterval: YTICK
+					},
+					tooltip: {
+						headerFormat: '<b>{series.name}</b><br>',
+						pointFormat: '{point.x:%f}tn - {point.y:.2f}%'
+					},
+				        legend: { 
+                                             layout:"vertical", 
+                                             align:"right",
+                                             enabled: true,
+                                             borderWidth: 1,
+                                             borderColor: "#909090",
+                                             borderRadius: 5,
+                                             symbolWidth: 55,
+                                             width: 125
+},
+					series: seriesData
+				})
+             });
+
+</script>
